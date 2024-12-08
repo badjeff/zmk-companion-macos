@@ -20,8 +20,17 @@ struct ZmkCompanionApp: App {
     @State var isMenuPresented: Bool = false
     
     @State var colorIndex: Int = 0
-    let colors: [NSColor] = [ .white, .green, .orange ]
-
+    var colors: [NSColor] = [
+        .white,
+        .green,
+        .orange
+    ]
+    var keyCombos: [KeyCombo] = [
+        KeyCombo(key: .f17, modifiers: []),
+        KeyCombo(key: .f19, modifiers: []),
+        KeyCombo(key: .f20, modifiers: [])
+    ]
+    
     init() {
         model = AppModel()
         _ = model.forApp(self)
@@ -61,14 +70,28 @@ class AppModel: ObservableObject {
         var usage: Int
     }
     var volFaderCfg: VolFaderDevConfig?
+    func hasVolCfg() -> Bool {
+        return volFaderCfg != nil
+    }
 
     var app: ZmkCompanionApp? = nil
+    var colorIndex: Int = 0
+    var hotKeys: [HotKey] = []
+
     func forApp(_ newApp: ZmkCompanionApp) -> AppModel {
         app = newApp
+        if app?.keyCombos.count ?? 0 > 0 {
+            for (i, keyCombo) in app!.keyCombos.enumerated() {
+                let hotkey = HotKey(keyCombo: keyCombo)
+                hotkey.keyDownHandler = {
+                    self.updateMenuLabelColorIndex(i)
+                }
+                hotKeys.append(hotkey)
+            }
+        }
         return self
     }
 
-    var colorIndex: Int = 0
     func updateMenuLabelColorIndex(_ newColorIndex: Int) {
         colorIndex = newColorIndex
         print("colorIndex: \(colorIndex)")
@@ -102,28 +125,9 @@ class AppModel: ObservableObject {
     var skipSendReport: Bool = false
     var hidReportVal: UInt8 = 0
 
-    var hotKeys: [HotKey] = []
-
     internal init() {
-        
-        let hotkeyF18 = HotKey(keyCombo: KeyCombo(key: .f18, modifiers: []))
-        hotkeyF18.keyDownHandler = {
-            self.updateMenuLabelColorIndex(0)
-        }
-        hotKeys.append(hotkeyF18)
 
-        let hotkeyF19 = HotKey(keyCombo: KeyCombo(key: .f19, modifiers: []))
-        hotkeyF19.keyDownHandler = {
-            self.updateMenuLabelColorIndex(1)
-        }
-        hotKeys.append(hotkeyF19)
-
-        let hotkeyF20 = HotKey(keyCombo: KeyCombo(key: .f20, modifiers: []))
-        hotkeyF20.keyDownHandler = {
-            self.updateMenuLabelColorIndex(2)
-        }
-        hotKeys.append(hotkeyF20)
-        
+        // comment below line if not using volume fader
         self.volFaderCfg = VolFaderDevConfig(vid: 0x1D50, pid: 0x615E, productKey: "zero36", usagePage: 0x0C, usage: 0xE0)
         
         if (self.volFaderCfg != nil) {
@@ -206,19 +210,23 @@ struct AppMenu: View {
     
     @StateObject var model: AppModel
     @State var volume: Float = 0
-
+    
     var body: some View {
 
-        Text(model.volFaderIsReady ? "Volume Fader Connected" : "No Volume Fader Is Connected")
+        !self.model.hasVolCfg()
+        ? Text("").fixedSize(horizontal: true, vertical: true).frame(width: 0, height: 0).padding(0)
+        : Text(model.volFaderIsReady ? "Volume Fader Connected" : "No Volume Fader Is Connected")
             .fixedSize(horizontal: false, vertical: true)
             .frame(width: 200, height: 12)
             .padding(8)
 
-        Text("Sound Volume: \( String(format: "%.0f", model.soundVolume * 100) )%")
+        !self.model.hasVolCfg()
+        ? Text("").fixedSize(horizontal: true, vertical: true).frame(width: 0, height: 0).padding(0)
+        : Text("Sound Volume: \( String(format: "%.0f", model.soundVolume * 100) )%")
             .fixedSize(horizontal: false, vertical: true)
             .frame(width: 160, height: 20)
             .padding(8)
-
+        
         Button {
             NSApplication.shared.terminate(nil)
         } label: {
