@@ -23,7 +23,7 @@ struct zmk_companion: App {
         .menuBarExtraStyle(.window)
         .menuBarExtraAccess(isPresented: $isMenuPresented)
         .onChange(of: isMenuPresented, perform: { newVal in
-            self.model.changeAppear(isMenuPresented)
+            self.model.updateMenuAppearance(isMenuPresented)
         })
     }
 
@@ -31,23 +31,26 @@ struct zmk_companion: App {
 
 class AppModel: ObservableObject {
     
-    let dev_vid: Int = 0x1D50
-    let dev_pid: Int = 0x615E
-    let dev_productKey: String = "zero36"
-    let dev_usagePage: Int = 0x0C
-    let dev_usage: Int = 0xE0
+    struct VolFaderDevConfig {
+        var vid: Int
+        var pid: Int
+        var productKey: String
+        var usagePage: Int
+        var usage: Int
+    }
+    var volFaderCfg: VolFaderDevConfig?
 
-    var appear = false
-    func changeAppear(_ newVal: Bool) {
-        appear = newVal
-        print(appear ? "appear!" : "disappear!")
+    var menuAppearance = false
+    func updateMenuAppearance(_ newVal: Bool) {
+        menuAppearance = newVal
+        print(menuAppearance ? "menu appear!" : "menu disappear!")
         self.objectWillChange.send()
     }
 
-    var ready = false
-    func changeReady(_ newVal: Bool) {
-        ready = newVal
-        print(ready ? "ready!" : "phew!")
+    var volFaderIsReady = false
+    func updateVolFaderIdReady(_ newVal: Bool) {
+        volFaderIsReady = newVal
+        print(volFaderIsReady ? "vol fader ready!" : "vol fader phew!")
         self.objectWillChange.send()
     }
     
@@ -60,10 +63,63 @@ class AppModel: ObservableObject {
         return true
     }
     
+    // properties to skip unnessary hid reporting
     var skipSendReport: Bool = false
     var hidReportVal: UInt8 = 0
     
     internal init() {
+        
+        self.volFaderCfg = VolFaderDevConfig(vid: 0x1D50, pid: 0x615E, productKey: "zero36", usagePage: 0x0C, usage: 0xE0)
+        
+        if (self.volFaderCfg != nil) {
+            // Hid.manager.listHIDDevices(printLog: true)
+            Hid.manager.didHidDevicesReported = { reportId in
+                // print("hid reported")
+                DispatchQueue.main.async {
+                    if reportId == 5 {
+                        let readVal = Hid.manager.readHIDReport(reportId: Int(reportId), reportLength: 2)
+                        if (readVal.count == 2) {
+                            let pVol = readVal[1]
+                            self.skipSendReport = true
+                            self.hidReportVal = pVol
+                            let fVol = Float(pVol) / 100.0
+                            // print("read hid value: \(fVol) (\( pVol )%)")
+                            Sound.output.volume = fVol
+                        }
+                    }
+                }
+            }
+            Hid.manager.didHidDevicesAdded = { inDevice in
+                // print("hid added")
+                DispatchQueue.main.async {
+                    print("open hid device")
+                    Hid.manager.openHID(device: inDevice)
+                    if (Hid.manager.isOpen ?? false) {
+                        try? Hid.manager.addHidDeviceReportObserver()
+                        self.updateVolFaderIdReady(true)
+                    }
+                }
+            }
+            Hid.manager.didHidDevicesRemoved = { inDevice in
+                // print("hid removed")
+                DispatchQueue.main.async {
+                    print("close hid device")
+                    if (Hid.manager.isOpen ?? false) {
+                        try? Hid.manager.removeHidDeviceReportObserver()
+                        Hid.manager.closeHID()
+                    }
+                    self.updateVolFaderIdReady(false)
+                }
+            }
+            try? Hid.manager.addHidDevicesAddRemoveObserver(vid: self.volFaderCfg!.vid,
+                                                            pid: self.volFaderCfg!.pid,
+                                                            productKey: self.volFaderCfg!.productKey,
+                                                            usagePage: self.volFaderCfg!.usagePage,
+                                                            usage: self.volFaderCfg!.usage)
+
+            print("volume fader hid device observer set!")
+        }
+        
         Sound.output.didAudioDevicesChanged = {
             DispatchQueue.main.async {
                 let vol = Sound.output.volume
@@ -86,52 +142,6 @@ class AppModel: ObservableObject {
         try? Sound.output.addAudioDevicesChangeObserver()
         _ = self.changeSoundVolume(Sound.output.volume)
 
-        // Hid.manager.listHIDDevices(printLog: true)
-
-        Hid.manager.didHidDevicesReported = { reportId in
-            // print("hid reported")
-            DispatchQueue.main.async {
-                if reportId == 5 {
-                    let readVal = Hid.manager.readHIDReport(reportId: Int(reportId), reportLength: 2)
-                    if (readVal.count == 2) {
-                        let pVol = readVal[1]
-                        self.skipSendReport = true
-                        self.hidReportVal = pVol
-                        let fVol = Float(pVol) / 100.0
-                        // print("read hid value: \(fVol) (\( pVol )%)")
-                        Sound.output.volume = fVol
-                    }
-                }
-            }
-        }
-        Hid.manager.didHidDevicesAdded = { inDevice in
-            // print("hid added")
-            DispatchQueue.main.async {
-                print("open hid device")
-                Hid.manager.openHID(device: inDevice)
-                if (Hid.manager.isOpen ?? false) {
-                    try? Hid.manager.addHidDeviceReportObserver()
-                    self.changeReady(true)
-                }
-            }
-        }
-        Hid.manager.didHidDevicesRemoved = { inDevice in
-            // print("hid removed")
-            DispatchQueue.main.async {
-                print("close hid device")
-                if (Hid.manager.isOpen ?? false) {
-                    try? Hid.manager.removeHidDeviceReportObserver()
-                    Hid.manager.closeHID()
-                }
-                self.changeReady(false)
-            }
-        }
-        try? Hid.manager.addHidDevicesAddRemoveObserver(vid: self.dev_vid,
-                                                        pid: self.dev_pid,
-                                                        productKey: self.dev_productKey,
-                                                        usagePage: self.dev_usagePage,
-                                                        usage: self.dev_usage)
-        
         print("all set!")
     }
     
@@ -145,9 +155,9 @@ struct AppMenu: View {
 
     var body: some View {
 
-        Text(model.ready ? "Device connected" : "No device connected.")
+        Text(model.volFaderIsReady ? "Volume Fader Connected" : "No Volume Fader Is Connected")
             .fixedSize(horizontal: false, vertical: true)
-            .frame(height: 12)
+            .frame(width: 200, height: 12)
             .padding(8)
 
         Text("Sound Volume: \( String(format: "%.0f", model.soundVolume * 100) )%")
