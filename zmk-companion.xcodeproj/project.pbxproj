@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1F1633402D05B4570086F92F /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 1F16333F2D05B4570086F92F /* HotKey */; };
 		1F1658D72C94C2C400C08F60 /* Sound.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F1658D62C94C2C400C08F60 /* Sound.swift */; };
 		1F7682DA2C709D5A00E9EB16 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F7682D92C709D5A00E9EB16 /* App.swift */; };
 		1F7682DE2C709D5C00E9EB16 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1F7682DD2C709D5C00E9EB16 /* Assets.xcassets */; };
@@ -41,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F1633402D05B4570086F92F /* HotKey in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -116,6 +118,7 @@
 			);
 			name = "zmk-companion";
 			packageProductDependencies = (
+				1F16333F2D05B4570086F92F /* HotKey */,
 			);
 			productName = "zmk-companion";
 			productReference = 1F7682D62C709D5A00E9EB16 /* zmk-companion.app */;
@@ -146,6 +149,7 @@
 			);
 			mainGroup = 1F7682CD2C709D5A00E9EB16;
 			packageReferences = (
+				1F16333E2D05B4570086F92F /* XCRemoteSwiftPackageReference "HotKey" */,
 			);
 			productRefGroup = 1F7682D72C709D5A00E9EB16 /* Products */;
 			projectDirPath = "";
@@ -394,6 +398,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1F16333E2D05B4570086F92F /* XCRemoteSwiftPackageReference "HotKey" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/soffes/HotKey.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1F16333F2D05B4570086F92F /* HotKey */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F16333E2D05B4570086F92F /* XCRemoteSwiftPackageReference "HotKey" */;
+			productName = HotKey;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1F7682CE2C709D5A00E9EB16 /* Project object */;
 }

@@ -8,22 +8,44 @@
 import SwiftUI
 import CoreServices
 
-@main
-struct zmk_companion: App {
-    
-    let model: AppModel = AppModel()
+import HotKey
+import Carbon
 
-    @State var pressed: Bool = false
+@main
+struct ZmkCompanionApp: App {
+    
+    @ObservedObject var model: AppModel
+
+    @State var isInserted = true
     @State var isMenuPresented: Bool = false
+    
+    @State var colorIndex: Int = 0
+    let colors: [NSColor] = [ .white, .green, .orange ]
+
+    init() {
+        model = AppModel()
+        _ = model.forApp(self)
+        model.updateMenuLabelColorIndex(0)
+    }
 
     var body: some Scene {
-        MenuBarExtra("ZMK Companion App", systemImage: "keyboard") {
+        MenuBarExtra(isInserted: $isInserted) {
             AppMenu(model: self.model)
+        } label: {
+            let color = colors[colorIndex]
+            let configuration = NSImage.SymbolConfiguration(pointSize: 16, weight: .light)
+                                .applying(.init(paletteColors: [ color ]))
+            let image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: nil)
+            let updateImage = image?.withSymbolConfiguration(configuration)
+            Image(nsImage: updateImage!)
         }
         .menuBarExtraStyle(.window)
         .menuBarExtraAccess(isPresented: $isMenuPresented)
         .onChange(of: isMenuPresented, perform: { newVal in
             self.model.updateMenuAppearance(isMenuPresented)
+        })
+        .onChange(of: model.colorIndex, perform: { newVal in
+            self.colorIndex = model.colorIndex
         })
     }
 
@@ -39,6 +61,19 @@ class AppModel: ObservableObject {
         var usage: Int
     }
     var volFaderCfg: VolFaderDevConfig?
+
+    var app: ZmkCompanionApp? = nil
+    func forApp(_ newApp: ZmkCompanionApp) -> AppModel {
+        app = newApp
+        return self
+    }
+
+    var colorIndex: Int = 0
+    func updateMenuLabelColorIndex(_ newColorIndex: Int) {
+        colorIndex = newColorIndex
+        print("colorIndex: \(colorIndex)")
+        self.objectWillChange.send()
+    }
 
     var menuAppearance = false
     func updateMenuAppearance(_ newVal: Bool) {
@@ -66,8 +101,28 @@ class AppModel: ObservableObject {
     // properties to skip unnessary hid reporting
     var skipSendReport: Bool = false
     var hidReportVal: UInt8 = 0
-    
+
+    var hotKeys: [HotKey] = []
+
     internal init() {
+        
+        let hotkeyF18 = HotKey(keyCombo: KeyCombo(key: .f18, modifiers: []))
+        hotkeyF18.keyDownHandler = {
+            self.updateMenuLabelColorIndex(0)
+        }
+        hotKeys.append(hotkeyF18)
+
+        let hotkeyF19 = HotKey(keyCombo: KeyCombo(key: .f19, modifiers: []))
+        hotkeyF19.keyDownHandler = {
+            self.updateMenuLabelColorIndex(1)
+        }
+        hotKeys.append(hotkeyF19)
+
+        let hotkeyF20 = HotKey(keyCombo: KeyCombo(key: .f20, modifiers: []))
+        hotkeyF20.keyDownHandler = {
+            self.updateMenuLabelColorIndex(2)
+        }
+        hotKeys.append(hotkeyF20)
         
         self.volFaderCfg = VolFaderDevConfig(vid: 0x1D50, pid: 0x615E, productKey: "zero36", usagePage: 0x0C, usage: 0xE0)
         
@@ -150,7 +205,6 @@ class AppModel: ObservableObject {
 struct AppMenu: View {
     
     @StateObject var model: AppModel
-    
     @State var volume: Float = 0
 
     var body: some View {
