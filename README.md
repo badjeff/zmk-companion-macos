@@ -28,61 +28,40 @@ A main menu macOS application communicate to ZMK powered HID device.
 /* setup zmk,output-behavior-listener to trigger function key F17 / F19 / F20 on layer state change */
 #define OUTPUT_SOURCE_LAYER_STATE_CHANGE        1
 /{
-        kp_f17_on_enter_def_layer {
-                compatible = "zmk,output-behavior-listener";
-                sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
-                layers = < DEF >;
-                bindings = < &kp F17 >; tap-ms = <30>;
-        };
-                kp_f17_on_leave_num_to_def_layer {
-                        compatible = "zmk,output-behavior-listener";
-                        sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
-                        invert-state; position = < NUM >; layers = < DEF >; 
-                        bindings = < &kp F17 >; tap-ms = <30>;
-                };
-                kp_f17_on_leave_mmv_to_def_layer {
-                        compatible = "zmk,output-behavior-listener";
-                        sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
-                        invert-state; position = < MSK >; layers = < DEF >; 
-                        bindings = < &kp F17 >; tap-ms = <30>;
-                };
-                kp_f17_on_leave_msc_to_def_layer {
-                        compatible = "zmk,output-behavior-listener";
-                        sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
-                        invert-state; position = < MSC >; layers = < DEF >; 
-                        bindings = < &kp F17 >; tap-ms = <30>;
-                };
-                kp_f17_on_leave_mmv_to_num_layer {
-                        compatible = "zmk,output-behavior-listener";
-                        sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
-                        invert-state; position = < MSK >; layers = < NUM >; 
-                        bindings = < &kp F17 >; tap-ms = <30>;
-                };
-                kp_f17_on_leave_msc_to_num_layer {
-                        compatible = "zmk,output-behavior-listener";
-                        sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
-                        invert-state; position = < MSC >; layers = < NUM >; 
-                        bindings = < &kp F17 >; tap-ms = <30>;
-                };
-
+        /* enter and leave to MOUSE KEY layer */
         kp_f19_on_enter_mmv_layer {
                 compatible = "zmk,output-behavior-listener";
                 sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
-                layers = < MSK >;
-                bindings = < &kp F19 >; tap-ms = <30>;
+                layers = < MSK >; bindings = < &kp F19 >; tap-ms = <30>;
         };
-                kp_f19_on_leave_msc_to_mmv_layer {
-                        compatible = "zmk,output-behavior-listener";
-                        sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
-                        invert-state; position = < MSC >; layers = < MSK >; 
-                        bindings = < &kp F19 >; tap-ms = <30>;
-                };
+        kp_f19_on_leave_to_mmv_layer {
+                compatible = "zmk,output-behavior-listener";
+                sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
+                invert-state; layers = < MSK >; bindings = < &kp F19 >; tap-ms = <30>;
+        };
 
+        /* enter and leave to MOUSE SCROLL layer */
         kp_f20_on_enter_msc_layer {
                 compatible = "zmk,output-behavior-listener";
                 sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
-                layers = < MSC >;
-                bindings = < &kp F20 >; tap-ms = <30>;
+                layers = < MSC >; bindings = < &kp F20 >; tap-ms = <30>;
+        };
+        kp_f20_on_leave_to_msc_layer {
+                compatible = "zmk,output-behavior-listener";
+                sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
+                invert-state; layers = < MSC >; bindings = < &kp F20 >; tap-ms = <30>;
+        };
+
+        /* back to base layers */
+        kp_f17_on_leave_to_def_layer {
+                compatible = "zmk,output-behavior-listener";
+                sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
+                invert-state; layers = < DEF >; bindings = < &kp F17 >; tap-ms = <30>;
+        };
+        kp_f17_on_leave_to_num_layer {
+                compatible = "zmk,output-behavior-listener";
+                sources = < OUTPUT_SOURCE_LAYER_STATE_CHANGE >;
+                invert-state; layers = < NUM >; bindings = < &kp F17 >; tap-ms = <30>;
         };
 };
 ```
