@@ -73,6 +73,9 @@ class AppModel: ObservableObject {
     func hasVolCfg() -> Bool {
         return volFaderCfg != nil
     }
+    func showVolInMenu() -> Bool {
+        return volFaderCfg != nil && volFaderIsReady
+    }
 
     var app: ZmkCompanionApp? = nil
     var colorIndex: Int = 0
@@ -213,14 +216,14 @@ struct AppMenu: View {
     
     var body: some View {
 
-        !self.model.hasVolCfg()
+        !self.model.showVolInMenu()
         ? Text("").fixedSize(horizontal: true, vertical: true).frame(width: 0, height: 0).padding(0)
         : Text(model.volFaderIsReady ? "Volume Fader Connected" : "No Volume Fader Is Connected")
             .fixedSize(horizontal: false, vertical: true)
             .frame(width: 200, height: 12)
             .padding(8)
 
-        !self.model.hasVolCfg()
+        !self.model.showVolInMenu()
         ? Text("").fixedSize(horizontal: true, vertical: true).frame(width: 0, height: 0).padding(0)
         : Text("Sound Volume: \( String(format: "%.0f", model.soundVolume * 100) )%")
             .fixedSize(horizontal: false, vertical: true)
